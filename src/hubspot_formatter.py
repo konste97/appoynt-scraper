@@ -13,7 +13,7 @@ import csv
 import logging
 from pathlib import Path
 
-from config.settings import OUTPUT_DIR, LEADS_WITH_EMAIL_CSV, LEADS_NO_EMAIL_CSV
+from config.settings import OUTPUT_DIR, LEADS_WITH_EMAIL_CSV, LEADS_NO_EMAIL_CSV, LEADS_WHATSAPP_READY_CSV
 
 
 # Mapping: Interner Feldname -> HubSpot-Spaltenname
@@ -34,7 +34,7 @@ HUBSPOT_COLUMNS = [
     ("_lead_source", "lead_source"),          # Custom Property, immer "Scraper"
     ("category_label", "branche"),            # Custom Property
     # Sales-Intelligence-Felder (Custom Properties)
-    ("has_whatsapp", "has_whatsapp"),              # True / False
+    ("has_whatsapp", "has_whatsapp"),              # "true" / "false" (HubSpot Checkbox)
     ("whatsapp_number", "whatsapp_number"),        # z.B. "491234567890"
     ("booking_system", "booking_system"),          # z.B. "Calendly", "Treatwell"
     ("booking_url", "booking_url"),                # URL zur Buchungsseite
@@ -74,7 +74,12 @@ def _write_csv(leads: list[dict], filepath: Path, logger: logging.Logger) -> Non
                 elif field_key == "_lead_source":
                     row.append("Scraper")
                 else:
-                    row.append(lead.get(field_key, ""))
+                    value = lead.get(field_key, "")
+                    # Booleans in HubSpot-kompatible Strings umwandeln
+                    # HubSpot erkennt "true"/"false" als Checkbox-Werte
+                    if isinstance(value, bool):
+                        value = "true" if value else "false"
+                    row.append(value)
             writer.writerow(row)
 
     logger.info(f"{len(leads)} Leads geschrieben -> {filepath}")
@@ -96,12 +101,17 @@ def export_to_hubspot_csv(leads: list[dict], logger: logging.Logger) -> tuple[Pa
     leads_with_email = [l for l in leads if l.get("email")]
     leads_no_email = [l for l in leads if not l.get("email")]
 
+    # WhatsApp-ready: Leads die bereits WhatsApp nutzen (heisseste Leads fuer APPOYNT)
+    leads_whatsapp_ready = [l for l in leads if l.get("has_whatsapp")]
+
     logger.info(
         f"Export: {len(leads_with_email)} Leads mit E-Mail, "
-        f"{len(leads_no_email)} Leads ohne E-Mail"
+        f"{len(leads_no_email)} Leads ohne E-Mail, "
+        f"{len(leads_whatsapp_ready)} Leads mit WhatsApp"
     )
 
     _write_csv(leads_with_email, LEADS_WITH_EMAIL_CSV, logger)
     _write_csv(leads_no_email, LEADS_NO_EMAIL_CSV, logger)
+    _write_csv(leads_whatsapp_ready, LEADS_WHATSAPP_READY_CSV, logger)
 
     return LEADS_WITH_EMAIL_CSV, LEADS_NO_EMAIL_CSV
