@@ -6,14 +6,14 @@ Formatiert die gesammelten Leads als CSV im HubSpot-Import-Format.
 HubSpot erwartet bestimmte Spaltenbezeichnungen beim Import. Diese Datei
 kuemmert sich um das korrekte Mapping und erstellt zwei separate CSVs:
 - leads_with_email.csv: Leads mit E-Mail (sofort fuer Outreach nutzbar)
-- leads_no_email.csv: Leads ohne E-Mail (fuer manuellen Check)
+- leads_cold_calling.csv: Leads ohne E-Mail aber mit Telefon (fuer Cold Calling)
 """
 
 import csv
 import logging
 from pathlib import Path
 
-from config.settings import OUTPUT_DIR, LEADS_WITH_EMAIL_CSV, LEADS_NO_EMAIL_CSV, LEADS_WHATSAPP_READY_CSV
+from config.settings import OUTPUT_DIR, LEADS_WITH_EMAIL_CSV, LEADS_COLD_CALLING_CSV, LEADS_WHATSAPP_READY_CSV
 
 
 # Mapping: Interner Feldname -> HubSpot-Spaltenname
@@ -87,31 +87,50 @@ def _write_csv(leads: list[dict], filepath: Path, logger: logging.Logger) -> Non
 
 def export_to_hubspot_csv(leads: list[dict], logger: logging.Logger) -> tuple[Path, Path]:
     """
-    Hauptfunktion: Teilt Leads in mit/ohne E-Mail auf und schreibt zwei CSVs.
+    Hauptfunktion: Teilt Leads in drei Kategorien auf und schreibt drei CSVs.
+
+    - leads_with_email.csv: Leads mit E-Mail (fuer Cold Email Outreach)
+    - leads_cold_calling.csv: Leads ohne E-Mail, aber mit Telefon (fuer Cold Calling)
+    - leads_whatsapp_ready.csv: Leads die WhatsApp nutzen (heisseste Leads)
+
+    Leads ohne E-Mail UND ohne Telefon werden verworfen (nicht nutzbar).
 
     Args:
         leads: Alle gesammelten Leads
         logger: Logger
 
     Returns:
-        Tuple mit Pfaden zu (leads_with_email.csv, leads_no_email.csv)
+        Tuple mit Pfaden zu (leads_with_email.csv, leads_cold_calling.csv)
     """
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     leads_with_email = [l for l in leads if l.get("email")]
-    leads_no_email = [l for l in leads if not l.get("email")]
+
+    # Cold Calling: Keine E-Mail, aber Telefonnummer vorhanden -> anrufbar
+    leads_cold_calling = [
+        l for l in leads if not l.get("email") and l.get("phone")
+    ]
 
     # WhatsApp-ready: Leads die bereits WhatsApp nutzen (heisseste Leads fuer APPOYNT)
     leads_whatsapp_ready = [l for l in leads if l.get("has_whatsapp")]
 
+    # Leads ohne E-Mail UND ohne Telefon sind nutzlos -> zaehlen aber loggen
+    leads_discarded = [
+        l for l in leads if not l.get("email") and not l.get("phone")
+    ]
+
     logger.info(
         f"Export: {len(leads_with_email)} Leads mit E-Mail, "
-        f"{len(leads_no_email)} Leads ohne E-Mail, "
+        f"{len(leads_cold_calling)} Leads fuer Cold Calling (nur Telefon), "
         f"{len(leads_whatsapp_ready)} Leads mit WhatsApp"
     )
+    if leads_discarded:
+        logger.info(
+            f"Verworfen: {len(leads_discarded)} Leads ohne E-Mail und ohne Telefon"
+        )
 
     _write_csv(leads_with_email, LEADS_WITH_EMAIL_CSV, logger)
-    _write_csv(leads_no_email, LEADS_NO_EMAIL_CSV, logger)
+    _write_csv(leads_cold_calling, LEADS_COLD_CALLING_CSV, logger)
     _write_csv(leads_whatsapp_ready, LEADS_WHATSAPP_READY_CSV, logger)
 
-    return LEADS_WITH_EMAIL_CSV, LEADS_NO_EMAIL_CSV
+    return LEADS_WITH_EMAIL_CSV, LEADS_COLD_CALLING_CSV

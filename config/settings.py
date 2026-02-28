@@ -45,5 +45,5 @@ CATEGORIES_FILE = BASE_DIR / "config" / "categories.json"
 
 # --- Output-Dateien ---
 LEADS_WITH_EMAIL_CSV = OUTPUT_DIR / "leads_with_email.csv"
-LEADS_NO_EMAIL_CSV = OUTPUT_DIR / "leads_no_email.csv"
+LEADS_COLD_CALLING_CSV = OUTPUT_DIR / "leads_cold_calling.csv"
 LEADS_WHATSAPP_READY_CSV = OUTPUT_DIR / "leads_whatsapp_ready.csv"
