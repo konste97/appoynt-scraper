@@ -27,7 +27,8 @@ from config.settings import (
     CATEGORIES_FILE,
 )
 from src.utils import retry_request, make_lead_id, CheckpointManager
-from src.email_extractor import extract_email
+from src.website_analyzer import analyze_website
+from src.sales_opener import generate_sales_opener
 
 
 # Google Places API (New) Endpoint
@@ -336,12 +337,12 @@ def scrape_leads(
                         place.get("addressComponents", [])
                     )
 
-                    # Website und E-Mail
+                    # Website analysieren (E-Mail + WhatsApp + Buchungssystem)
                     website = place.get("websiteUri", "")
-                    email = None
+                    analysis = None
                     if website:
-                        logger.debug(f"Extrahiere E-Mail von: {website}")
-                        email = extract_email(website, logger)
+                        logger.debug(f"Analysiere Website: {website}")
+                        analysis = analyze_website(website, logger)
 
                     # Strasse + Hausnummer zusammenfuegen
                     street_full = addr["street"]
@@ -353,7 +354,24 @@ def scrape_leads(
                     if not phone:
                         phone = place.get("internationalPhoneNumber", "")
 
-                    # Lead-Objekt erstellen
+                    google_rating = place.get("rating", "")
+                    google_reviews = place.get("userRatingCount", "")
+
+                    # Sales-Opener generieren
+                    sales_opener = ""
+                    if analysis:
+                        sales_opener = generate_sales_opener(
+                            business_name=name,
+                            has_whatsapp=analysis["has_whatsapp"],
+                            has_booking_system=analysis["has_booking_system"],
+                            booking_system_name=analysis["booking_system_name"],
+                            has_generic_booking=analysis["has_generic_booking"],
+                            google_rating=google_rating,
+                            google_reviews=google_reviews,
+                            category_label=label,
+                        )
+
+                    # Lead-Objekt erstellen (mit Sales-Intelligence-Feldern)
                     lead = {
                         "business_name": name,
                         "category_key": cat_key,
@@ -364,14 +382,32 @@ def scrape_leads(
                         "state": addr["state"] or bundesland,
                         "phone": phone,
                         "website": website,
-                        "email": email or "",
-                        "google_rating": place.get("rating", ""),
-                        "google_reviews": place.get("userRatingCount", ""),
+                        "email": (analysis["email"] if analysis else "") or "",
+                        "google_rating": google_rating,
+                        "google_reviews": google_reviews,
+                        # Sales-Intelligence-Felder
+                        "has_whatsapp": analysis["has_whatsapp"] if analysis else False,
+                        "whatsapp_number": analysis["whatsapp_number"] if analysis else "",
+                        "booking_system": analysis["booking_system_name"] if analysis else "",
+                        "booking_url": analysis["booking_url"] if analysis else "",
+                        "has_generic_booking": analysis["has_generic_booking"] if analysis else False,
+                        "sales_opener": sales_opener,
                     }
 
                     checkpoint.add_lead(lead, lead_id)
-                    status_email = f"E-Mail: {email}" if email else "keine E-Mail"
-                    logger.info(f"  + {name} ({status_email})")
+
+                    # Status-Ausgabe mit Signalen
+                    signals = []
+                    email = lead["email"]
+                    if email:
+                        signals.append(f"E-Mail: {email}")
+                    else:
+                        signals.append("keine E-Mail")
+                    if lead["has_whatsapp"]:
+                        signals.append("WhatsApp: ja")
+                    if lead["booking_system"]:
+                        signals.append(f"Buchung: {lead['booking_system']}")
+                    logger.info(f"  + {name} ({' | '.join(signals)})")
 
             # Kombination als erledigt markieren
             checkpoint.mark_processed(city_name, cat_key)

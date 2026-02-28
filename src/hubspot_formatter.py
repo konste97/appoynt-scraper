@@ -33,6 +33,12 @@ HUBSPOT_COLUMNS = [
     ("google_reviews", "google_reviews"),     # Custom Property
     ("_lead_source", "lead_source"),          # Custom Property, immer "Scraper"
     ("category_label", "branche"),            # Custom Property
+    # Sales-Intelligence-Felder (Custom Properties)
+    ("has_whatsapp", "has_whatsapp"),              # True / False
+    ("whatsapp_number", "whatsapp_number"),        # z.B. "491234567890"
+    ("booking_system", "booking_system"),          # z.B. "Calendly", "Treatwell"
+    ("booking_url", "booking_url"),                # URL zur Buchungsseite
+    ("sales_opener", "sales_opener"),              # Personalisierter Opener-Text
 ]
 
 
