@@ -6,7 +6,7 @@ Lead-Scraper fuer APPOYNT: Sammelt Business-Kontaktdaten (inkl. E-Mail) von Goog
 
 ### 1. Python-Abhaengigkeiten installieren
 
-```bash
+```
 cd appoynt-scraper
 pip install -r requirements.txt
 ```
@@ -19,7 +19,7 @@ pip install -r requirements.txt
 4. Erstelle einen API Key unter APIs & Services > Credentials
 5. Kopiere `.env.example` nach `.env` und trage deinen Key ein:
 
-```bash
+```
 cp .env.example .env
 # Dann .env bearbeiten und GOOGLE_API_KEY eintragen
 ```
@@ -28,49 +28,57 @@ cp .env.example .env
 
 ### Einzelne Stadt + Kategorie
 
-```bash
+```
 python run.py --category friseur --city Berlin
 ```
 
 ### Nur eine Kategorie, alle Staedte
 
-```bash
+```
 python run.py --category kosmetik
 ```
 
 ### Nur eine Stadt, alle Kategorien
 
-```bash
+```
 python run.py --city Hamburg
 ```
 
 ### Batch-Modus (alles scrapen)
 
-```bash
+```
 python run.py --all
 ```
 
 ### Checkpoint zuruecksetzen
 
-```bash
+```
 python run.py --all --reset
 ```
 
 ## Verfuegbare Kategorien
 
 | Key | Beschreibung |
-|-----|-------------|
+| --- | --- |
 | `friseur` | Friseure / Friseursalons |
 | `kosmetik` | Kosmetikstudios / Beauty Salons |
 | `piercing` | Piercing Studios |
 | `tattoo` | Tattoo Studios |
+| `life_coach` | Life Coach / Business Coach |
+| `massage` | Massage Studio / Massagepraxis |
+| `yoga` | Yoga Studio / Pilates |
+| `nachhilfe` | Nachhilfe / Tutor |
+| `physiotherapie` | Physiotherapie |
+| `ernaehrung` | Ernaehrungsberatung |
+| `personal_trainer` | Personal Trainer / Fitness Coach |
+| `heilpraktiker` | Heilpraktiker / Naturheilpraxis |
 
 ## Output
 
 Nach dem Scraping findest du zwei CSV-Dateien im `output/`-Ordner:
 
-- `leads_with_email.csv` - Leads mit E-Mail-Adresse (HubSpot-Import-Format)
-- `leads_no_email.csv` - Leads ohne E-Mail (fuer manuellen Check)
+* `leads_with_email.csv` - Leads mit E-Mail-Adresse (HubSpot-Import-Format)
+* `leads_no_email.csv` - Leads ohne E-Mail (fuer manuellen Check)
 
 Die CSVs koennen direkt in HubSpot importiert werden.
 
@@ -101,10 +109,13 @@ appoynt-scraper/
 ## Konfiguration anpassen
 
 ### Staedte aendern
+
 Bearbeite `config/cities.json` - fuege Staedte hinzu oder entferne sie.
 
 ### Kategorien aendern
+
 Bearbeite `config/categories.json` - fuege neue Branchen oder Suchbegriffe hinzu.
 
 ### Rate Limits aendern
+
 Bearbeite `config/settings.py` - passe `REQUEST_DELAY_SECONDS` an.
