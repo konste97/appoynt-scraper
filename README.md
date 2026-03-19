@@ -4,7 +4,7 @@ Lead-Scraper für APPOYNT: Sammelt Business-Kontaktdaten (inkl. E-Mail) von Goog
 
 ## Setup
 
-### 1. Python-Abhaengigkeiten installieren
+### 1. Python-Abhängigkeiten installieren
 
 ```
 cd appoynt-scraper
