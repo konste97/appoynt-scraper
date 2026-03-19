@@ -108,14 +108,14 @@ appoynt-scraper/
 
 ## Konfiguration anpassen
 
-### Staedte aendern
+### Städte ändern
 
 Bearbeite `config/cities.json` - fuege Staedte hinzu oder entferne sie.
 
-### Kategorien aendern
+### Kategorien ändern
 
 Bearbeite `config/categories.json` - fuege neue Branchen oder Suchbegriffe hinzu.
 
-### Rate Limits aendern
+### Rate Limits ändern
 
 Bearbeite `config/settings.py` - passe `REQUEST_DELAY_SECONDS` an.
