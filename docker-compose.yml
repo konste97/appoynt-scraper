@@ -1,0 +1,14 @@
+services:
+  scraper:
+    build: .
+    container_name: appoynt-scraper
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - scraper-output:/app/output
+      - scraper-logs:/app/logs
+
+volumes:
+  scraper-output:
+  scraper-logs:

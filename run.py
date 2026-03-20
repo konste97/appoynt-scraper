@@ -32,6 +32,7 @@ from src.utils import setup_logging, CheckpointManager
 from src.scraper import scrape_leads, load_categories
 from src.hubspot_formatter import export_to_hubspot_csv
 from config.settings import CATEGORIES_FILE
+from src.slack_notifier import send_slack_notification
 
 
 def main():
@@ -147,6 +148,18 @@ Beispiele:
         logger.info(f"  Leads mit E-Mail:  {csv_email}")
         logger.info(f"  Leads ohne E-Mail: {csv_no_email}")
         logger.info("=" * 60)
+
+        # Slack-Benachrichtigung
+        leads_with = len([l for l in leads if l.get("email")])
+        leads_without = len(leads) - leads_with
+        send_slack_notification(
+            leads_total=len(leads),
+            leads_with_email=leads_with,
+            leads_no_email=leads_without,
+            csv_email_path=str(csv_email),
+            csv_no_email_path=str(csv_no_email),
+            logger=logger,
+        )
     else:
         logger.warning("Keine Leads gefunden. Pruefe deinen API Key und die Suchbegriffe.")
 
