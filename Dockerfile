@@ -2,6 +2,9 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+# Cron installieren
+RUN apt-get update && apt-get install -y --no-install-recommends cron && rm -rf /var/lib/apt/lists/*
+
 # Dependencies installieren
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
@@ -12,5 +15,9 @@ COPY . .
 # Output-Ordner anlegen
 RUN mkdir -p output/checkpoints logs
 
-# Container bleibt am Leben (kein Webserver, kein Port)
-CMD ["tail", "-f", "/dev/null"]
+# Crontab einrichten (woechentlicher Auto-Run)
+COPY crontab /etc/cron.d/scraper-cron
+RUN chmod 0644 /etc/cron.d/scraper-cron && crontab /etc/cron.d/scraper-cron
+
+# Env-Vars fuer Cron verfuegbar machen + Cron im Vordergrund starten
+CMD printenv > /etc/environment && cron -f

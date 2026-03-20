@@ -25,6 +25,7 @@ from config.settings import (
     SEARCH_RADIUS_METERS,
     CITIES_FILE,
     CATEGORIES_FILE,
+    MAX_LEADS_PER_RUN,
 )
 from src.utils import retry_request, make_lead_id, CheckpointManager
 from src.website_analyzer import analyze_website
@@ -290,6 +291,8 @@ def scrape_leads(
     )
 
     combo_count = 0
+    new_leads_count = 0
+    limit_reached = False
 
     for city_info in cities:
         city_name = city_info["name"]
@@ -407,6 +410,7 @@ def scrape_leads(
                     }
 
                     checkpoint.add_lead(lead, lead_id)
+                    new_leads_count += 1
 
                     # Status-Ausgabe mit Signalen
                     signals = []
@@ -419,10 +423,29 @@ def scrape_leads(
                         signals.append("WhatsApp: ja")
                     if lead["booking_system"]:
                         signals.append(f"Buchung: {lead['booking_system']}")
-                    logger.info(f"  + {name} ({' | '.join(signals)})")
+                    logger.info(f"  + {name} [{new_leads_count}/{MAX_LEADS_PER_RUN}] ({' | '.join(signals)})")
 
-            # Kombination als erledigt markieren
-            checkpoint.mark_processed(city_name, cat_key)
+                    # Lead-Limit erreicht?
+                    if new_leads_count >= MAX_LEADS_PER_RUN:
+                        logger.info(
+                            f"Lead-Limit erreicht ({MAX_LEADS_PER_RUN}) — stoppe Scraping. "
+                            f"Naechster Run macht per Checkpoint weiter."
+                        )
+                        limit_reached = True
+                        break
+
+                if limit_reached:
+                    break
+
+            # Kombination nur als erledigt markieren wenn NICHT durch Limit abgebrochen
+            if not limit_reached:
+                checkpoint.mark_processed(city_name, cat_key)
+
+            if limit_reached:
+                break
+
+        if limit_reached:
+            break
 
     # Permanentes Dedup-Register sichern
     checkpoint.finalize()

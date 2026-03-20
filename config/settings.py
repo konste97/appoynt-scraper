@@ -5,6 +5,7 @@ Liest den Google API Key aus der .env-Datei und definiert
 alle wichtigen Parameter wie Rate Limits, Timeouts usw.
 """
 
+import json as _json
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -18,9 +19,20 @@ load_dotenv(BASE_DIR / ".env")
 # --- Google Places API ---
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 
+# --- Instantly.ai ---
+INSTANTLY_API_KEY = os.getenv("INSTANTLY_API_KEY", "")
+# Mapping: category_key -> Instantly Campaign ID (als JSON-String in Env-Var)
+# z.B. INSTANTLY_CAMPAIGNS={"friseur":"abc-123","yoga":"def-456",...}
+INSTANTLY_CAMPAIGNS = _json.loads(os.getenv("INSTANTLY_CAMPAIGNS", "{}"))
+
 # Radius in Metern fuer die Places-Suche rund um das Stadtzentrum.
 # 30km deckt auch groessere Staedte gut ab.
 SEARCH_RADIUS_METERS = 30000
+
+# --- Lead-Limit pro Durchlauf ---
+# Nach dieser Anzahl neuer Leads stoppt der Scraper.
+# Naechster Run macht per Checkpoint dort weiter.
+MAX_LEADS_PER_RUN = int(os.getenv("MAX_LEADS_PER_RUN", "500"))
 
 # --- Rate Limiting ---
 # Sekunden zwischen zwei Requests (1.0 = max 1 Request/Sek.)
