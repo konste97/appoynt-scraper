@@ -16,7 +16,7 @@ from collections import defaultdict
 from config.settings import INSTANTLY_API_KEY, INSTANTLY_CAMPAIGNS
 from src.utils import retry_request
 
-INSTANTLY_API_URL = "https://api.instantly.ai/api/v2/lead/bulkaddleads"
+INSTANTLY_API_URL = "https://api.instantly.ai/api/v2/leads/add"
 BATCH_SIZE = 500
 
 
