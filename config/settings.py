@@ -23,10 +23,7 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 INSTANTLY_API_KEY = os.getenv("INSTANTLY_API_KEY", "")
 # Mapping: category_key -> Instantly Campaign ID (als JSON-String in Env-Var)
 # z.B. INSTANTLY_CAMPAIGNS={"friseur":"abc-123","yoga":"def-456",...}
-try:
-    INSTANTLY_CAMPAIGNS = _json.loads(os.getenv("INSTANTLY_CAMPAIGNS", "{}"))
-except _json.JSONDecodeError:
-    INSTANTLY_CAMPAIGNS = {}
+INSTANTLY_CAMPAIGNS = _json.loads(os.getenv("INSTANTLY_CAMPAIGNS", "{}"))
 
 # Radius in Metern fuer die Places-Suche rund um das Stadtzentrum.
 # 30km deckt auch groessere Staedte gut ab.
