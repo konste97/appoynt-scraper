@@ -19,5 +19,6 @@ RUN mkdir -p output/checkpoints logs
 COPY crontab /etc/cron.d/scraper-cron
 RUN chmod 0644 /etc/cron.d/scraper-cron && crontab /etc/cron.d/scraper-cron
 
-# Env-Vars fuer Cron verfuegbar machen + Cron im Vordergrund starten
-CMD printenv > /etc/environment && cron -f
+# Wrapper-Script ausfuehrbar machen + Cron im Vordergrund starten
+RUN chmod +x /app/scripts/run-scraper.sh
+CMD cron -f

@@ -1,3 +1,3 @@
 # APPOYNT Lead Scraper — woechentlicher Auto-Run
 # Jeden Montag um 06:00 UTC
-0 6 * * 1 root . /etc/environment && cd /app && python run.py --all >> /app/logs/cron.log 2>&1
+0 6 * * 1 root /app/scripts/run-scraper.sh >> /app/logs/cron.log 2>&1
