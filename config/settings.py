@@ -34,6 +34,10 @@ SEARCH_RADIUS_METERS = 30000
 # Naechster Run macht per Checkpoint dort weiter.
 MAX_LEADS_PER_RUN = int(os.getenv("MAX_LEADS_PER_RUN", "500"))
 
+# --- Max Leads pro Stadt/Kategorie-Kombi ---
+# Verhindert dass eine einzelne Kategorie das gesamte Limit aufbraucht.
+MAX_LEADS_PER_COMBO = int(os.getenv("MAX_LEADS_PER_COMBO", "35"))
+
 # --- Rate Limiting ---
 # Sekunden zwischen zwei Requests (1.0 = max 1 Request/Sek.)
 REQUEST_DELAY_SECONDS = 1.0

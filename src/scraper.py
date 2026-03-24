@@ -26,6 +26,7 @@ from config.settings import (
     CITIES_FILE,
     CATEGORIES_FILE,
     MAX_LEADS_PER_RUN,
+    MAX_LEADS_PER_COMBO,
 )
 from src.utils import retry_request, make_lead_id, CheckpointManager
 from src.website_analyzer import analyze_website
@@ -315,6 +316,8 @@ def scrape_leads(
 
             # Fuer jeden Suchbegriff der Kategorie suchen
             seen_place_ids = set()
+            combo_leads_count = 0
+            combo_limit_reached = False
 
             for search_term in cat_data["search_terms"]:
                 query = f"{search_term} in {city_name}"
@@ -411,6 +414,7 @@ def scrape_leads(
 
                     checkpoint.add_lead(lead, lead_id)
                     new_leads_count += 1
+                    combo_leads_count += 1
 
                     # Status-Ausgabe mit Signalen
                     signals = []
@@ -434,10 +438,20 @@ def scrape_leads(
                         limit_reached = True
                         break
 
-                if limit_reached:
+                    # Kombi-Limit erreicht? -> naechste Kategorie
+                    if combo_leads_count >= MAX_LEADS_PER_COMBO:
+                        logger.info(
+                            f"  Kombi-Limit ({MAX_LEADS_PER_COMBO}) fuer {city_name}/{cat_key} "
+                            f"— weiter zur naechsten Kategorie"
+                        )
+                        combo_limit_reached = True
+                        break
+
+                if limit_reached or combo_limit_reached:
                     break
 
-            # Kombination nur als erledigt markieren wenn NICHT durch Limit abgebrochen
+            # Kombination als erledigt markieren wenn fertig ODER Kombi-Limit erreicht
+            # Nur NICHT markieren wenn das globale Limit den Abbruch erzwungen hat
             if not limit_reached:
                 checkpoint.mark_processed(city_name, cat_key)
 
