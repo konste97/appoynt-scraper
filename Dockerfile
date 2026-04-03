@@ -15,9 +15,9 @@ COPY . .
 # Output-Ordner anlegen
 RUN mkdir -p output/checkpoints logs
 
-# Crontab einrichten (woechentlicher Auto-Run)
+# Crontab einrichten (woechentlicher Auto-Run via /etc/cron.d/)
 COPY crontab /etc/cron.d/scraper-cron
-RUN chmod 0644 /etc/cron.d/scraper-cron && crontab /etc/cron.d/scraper-cron
+RUN chmod 0644 /etc/cron.d/scraper-cron
 
 # Wrapper-Script ausfuehrbar machen + Cron im Vordergrund starten
 RUN chmod +x /app/scripts/run-scraper.sh
