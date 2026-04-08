@@ -10,7 +10,7 @@ services:
       - scraper-logs:/app/logs
 
   file-server:
-    image: python:3.12-slim
+    image: python:3.12
     working_dir: /app/output
     command: python -m http.server 8000
     volumes:
