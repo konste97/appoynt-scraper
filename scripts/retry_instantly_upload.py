@@ -29,7 +29,7 @@ def load_leads_from_csv(csv_path: Path) -> list[dict]:
     if not csv_path.exists():
         log.error(f"CSV nicht gefunden: {csv_path}")
         return []
-    with open(csv_path, newline="", encoding="utf-8") as f:
+    with open(csv_path, newline="", encoding="utf-8-sig") as f:
         return list(csv.DictReader(f))
 
 

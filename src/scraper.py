@@ -120,7 +120,11 @@ def _search_places(
     if not response:
         return []
 
-    data = response.json()
+    try:
+        data = response.json()
+    except Exception:
+        logger.warning("Ungueltige JSON-Antwort von Google API — ueberspringe")
+        return []
 
     # Fehler pruefen
     if "error" in data:
@@ -130,7 +134,7 @@ def _search_places(
         )
         return []
 
-    places = data.get("places", [])
+    places = data.get("places") if isinstance(data.get("places"), list) else []
     all_results.extend(places)
 
     if not places:
@@ -164,8 +168,13 @@ def _search_places(
         if not response:
             break
 
-        data = response.json()
-        places = data.get("places", [])
+        try:
+            data = response.json()
+        except Exception:
+            logger.warning("Ungueltige JSON-Antwort von Google API (Folgeseite) — breche Paginierung ab")
+            break
+
+        places = data.get("places") if isinstance(data.get("places"), list) else []
         if not places:
             break
 

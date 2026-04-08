@@ -204,10 +204,6 @@ class CheckpointManager:
             self.data["processed_keys"].append(key)
             self.save()
 
-    def is_duplicate(self, lead_id: str) -> bool:
-        """Prueft ob ein Business schon in den Ergebnissen ist."""
-        return lead_id in self.data["seen_ids"]
-
     def add_lead(self, lead: dict, lead_id: str) -> None:
         """Fuegt einen neuen Lead hinzu und speichert den Checkpoint.
         Schreibt die ID auch ins permanente Dedup-Register."""
