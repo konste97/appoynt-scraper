@@ -43,9 +43,34 @@ def main() -> None:
 
     log.info(f"{len(leads)} Leads in CSV gefunden")
 
+    # CSV-Spalten auf interne Feldnamen normalisieren (CSV hat HubSpot-Header wie "Email", "Company name")
+    COLUMN_MAP = {
+        "Company name": "business_name",
+        "Industry": "category_label",
+        "Street address": "street_address",
+        "Zip": "postal_code",
+        "City": "city",
+        "State/Region": "state",
+        "Phone number": "phone",
+        "Website URL": "website",
+        "Email": "email",
+        "google_rating": "google_rating",
+        "google_reviews": "google_reviews",
+        "branche": "category_key",
+        "has_whatsapp": "has_whatsapp",
+        "whatsapp_number": "whatsapp_number",
+        "booking_system": "booking_system",
+        "booking_url": "booking_url",
+        "sales_opener": "sales_opener",
+    }
+    normalized = []
+    for row in leads:
+        lead = {COLUMN_MAP.get(k, k): v for k, v in row.items()}
+        normalized.append(lead)
+
     # Nur WA-Leads hochladen
-    wa_leads = [l for l in leads if l.get("has_whatsapp", "").lower() == "true"]
-    skipped_no_wa = len(leads) - len(wa_leads)
+    wa_leads = [l for l in normalized if l.get("has_whatsapp", "").lower() == "true"]
+    skipped_no_wa = len(normalized) - len(wa_leads)
     if skipped_no_wa:
         log.info(f"{skipped_no_wa} Leads ohne WhatsApp uebersprungen")
     log.info(f"{len(wa_leads)} Leads mit WhatsApp werden hochgeladen")
