@@ -19,6 +19,7 @@ Docs: https://developers.google.com/maps/documentation/places/web-service/text-s
 import json
 import logging
 import time
+from collections import defaultdict
 
 from config.settings import (
     GOOGLE_API_KEY,
@@ -27,6 +28,7 @@ from config.settings import (
     CATEGORIES_FILE,
     MAX_LEADS_PER_RUN,
     MAX_LEADS_PER_COMBO,
+    MAX_LEADS_PER_CATEGORY,
 )
 from src.utils import retry_request, make_lead_id, CheckpointManager
 from src.website_analyzer import analyze_website
@@ -303,6 +305,7 @@ def scrape_leads(
     combo_count = 0
     new_leads_count = 0
     limit_reached = False
+    category_counts: dict[str, int] = defaultdict(int)
 
     for city_info in cities:
         city_name = city_info["name"]
@@ -426,9 +429,19 @@ def scrape_leads(
                         logger.debug(f"  - {name} — kein WhatsApp, uebersprungen")
                         continue
 
+                    # Kategorie-Limit pruefen (gleichmaessige Verteilung ueber alle Staedte)
+                    if category_counts[cat_key] >= MAX_LEADS_PER_CATEGORY:
+                        logger.debug(
+                            f"  - {name} — Kategorie-Limit ({MAX_LEADS_PER_CATEGORY}) "
+                            f"fuer '{cat_key}' erreicht, uebersprungen"
+                        )
+                        combo_limit_reached = True
+                        break
+
                     checkpoint.add_lead(lead, lead_id)
                     new_leads_count += 1
                     combo_leads_count += 1
+                    category_counts[cat_key] += 1
 
                     # Status-Ausgabe mit Signalen
                     signals = []
