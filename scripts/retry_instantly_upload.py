@@ -8,6 +8,7 @@ Ausfuehren im Container:
 """
 
 import csv
+import json
 import logging
 import sys
 from pathlib import Path
@@ -15,7 +16,7 @@ from pathlib import Path
 # Projektroot zum Python-Path hinzufuegen
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from config.settings import LEADS_WITH_EMAIL_CSV
+from config.settings import LEADS_WITH_EMAIL_CSV, CATEGORIES_FILE
 from src.instantly_uploader import upload_leads_to_instantly
 
 logging.basicConfig(
@@ -43,6 +44,11 @@ def main() -> None:
 
     log.info(f"{len(leads)} Leads in CSV gefunden")
 
+    # Label -> category_key Reverse-Map aus categories.json bauen
+    with open(CATEGORIES_FILE, encoding="utf-8") as f:
+        categories = json.load(f)["categories"]
+    label_to_key = {v["label"]: k for k, v in categories.items()}
+
     # CSV-Spalten auf interne Feldnamen normalisieren (CSV hat HubSpot-Header wie "Email", "Company name")
     COLUMN_MAP = {
         "Company name": "business_name",
@@ -56,7 +62,6 @@ def main() -> None:
         "Email": "email",
         "google_rating": "google_rating",
         "google_reviews": "google_reviews",
-        "branche": "category_key",
         "has_whatsapp": "has_whatsapp",
         "whatsapp_number": "whatsapp_number",
         "booking_system": "booking_system",
@@ -66,6 +71,9 @@ def main() -> None:
     normalized = []
     for row in leads:
         lead = {COLUMN_MAP.get(k, k): v for k, v in row.items()}
+        # branche-Label auf category_key mappen (z.B. "Friseur / Friseursalon" -> "friseur")
+        label = lead.get("branche") or lead.get("category_label", "")
+        lead["category_key"] = label_to_key.get(label, "")
         normalized.append(lead)
 
     # Nur WA-Leads hochladen
