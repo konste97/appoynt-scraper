@@ -36,10 +36,6 @@ SEARCH_RADIUS_METERS = 30000
 # Naechster Run macht per Checkpoint dort weiter.
 MAX_LEADS_PER_RUN = int(os.getenv("MAX_LEADS_PER_RUN", "200"))
 
-# --- Max Leads pro Stadt/Kategorie-Kombi ---
-# Verhindert dass eine einzelne Stadt+Kategorie-Kombination das Limit dominiert.
-MAX_LEADS_PER_COMBO = int(os.getenv("MAX_LEADS_PER_COMBO", "35"))
-
 # --- Max Leads pro Kategorie (ueber alle Staedte) ---
 # Sorgt fuer gleichmaessige Verteilung: 200 Leads / 15 Kategorien = ~13 pro Kategorie.
 MAX_LEADS_PER_CATEGORY = int(os.getenv("MAX_LEADS_PER_CATEGORY", "13"))
