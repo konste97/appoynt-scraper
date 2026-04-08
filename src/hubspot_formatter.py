@@ -5,8 +5,8 @@ Formatiert die gesammelten Leads als CSV im HubSpot-Import-Format.
 
 HubSpot erwartet bestimmte Spaltenbezeichnungen beim Import. Diese Datei
 kuemmert sich um das korrekte Mapping und erstellt zwei separate CSVs:
-- leads_with_email.csv: Leads mit E-Mail (sofort fuer Outreach nutzbar)
-- leads_cold_calling.csv: Leads ohne E-Mail aber mit Telefon (fuer Cold Calling)
+- leads_with_email.csv: Leads mit E-Mail (geht zu Instantly)
+- leads_cold_calling.csv: Leads ohne E-Mail aber mit Telefon (fuer Cold Calling / HubSpot)
 """
 
 import csv
@@ -14,7 +14,7 @@ import logging
 from datetime import date
 from pathlib import Path
 
-from config.settings import OUTPUT_DIR, LEADS_WITH_EMAIL_CSV, LEADS_COLD_CALLING_CSV, LEADS_WHATSAPP_READY_CSV
+from config.settings import OUTPUT_DIR, LEADS_WITH_EMAIL_CSV, LEADS_COLD_CALLING_CSV
 
 
 # Mapping: Interner Feldname -> HubSpot-Spaltenname
@@ -91,11 +91,10 @@ def _write_csv(leads: list[dict], filepath: Path, logger: logging.Logger) -> Non
 
 def export_to_hubspot_csv(leads: list[dict], logger: logging.Logger) -> tuple[Path, Path]:
     """
-    Hauptfunktion: Teilt Leads in drei Kategorien auf und schreibt drei CSVs.
+    Hauptfunktion: Teilt Leads in zwei Kategorien auf und schreibt zwei CSVs.
 
-    - leads_with_email.csv: Leads mit E-Mail (fuer Cold Email Outreach)
+    - leads_with_email.csv: Leads mit E-Mail (geht zu Instantly)
     - leads_cold_calling.csv: Leads ohne E-Mail, aber mit Telefon (fuer Cold Calling)
-    - leads_whatsapp_ready.csv: Leads die WhatsApp nutzen (heisseste Leads)
 
     Leads ohne E-Mail UND ohne Telefon werden verworfen (nicht nutzbar).
 
@@ -115,9 +114,6 @@ def export_to_hubspot_csv(leads: list[dict], logger: logging.Logger) -> tuple[Pa
         l for l in leads if not l.get("email") and l.get("phone")
     ]
 
-    # WhatsApp-ready: Leads die bereits WhatsApp nutzen (heisseste Leads fuer APPOYNT)
-    leads_whatsapp_ready = [l for l in leads if l.get("has_whatsapp")]
-
     # Leads ohne E-Mail UND ohne Telefon sind nutzlos -> zaehlen aber loggen
     leads_discarded = [
         l for l in leads if not l.get("email") and not l.get("phone")
@@ -125,8 +121,7 @@ def export_to_hubspot_csv(leads: list[dict], logger: logging.Logger) -> tuple[Pa
 
     logger.info(
         f"Export: {len(leads_with_email)} Leads mit E-Mail, "
-        f"{len(leads_cold_calling)} Leads fuer Cold Calling (nur Telefon), "
-        f"{len(leads_whatsapp_ready)} Leads mit WhatsApp"
+        f"{len(leads_cold_calling)} Leads fuer Cold Calling (nur Telefon)"
     )
     if leads_discarded:
         logger.info(
@@ -135,6 +130,5 @@ def export_to_hubspot_csv(leads: list[dict], logger: logging.Logger) -> tuple[Pa
 
     _write_csv(leads_with_email, LEADS_WITH_EMAIL_CSV, logger)
     _write_csv(leads_cold_calling, LEADS_COLD_CALLING_CSV, logger)
-    _write_csv(leads_whatsapp_ready, LEADS_WHATSAPP_READY_CSV, logger)
 
     return LEADS_WITH_EMAIL_CSV, LEADS_COLD_CALLING_CSV
