@@ -6,15 +6,42 @@ Instantly.ai Lead Upload — laedt Leads mit E-Mail per API in Instantly-Kampagn
 - Routet Leads nach category_key in die richtige Kampagne
 - Filtert automatisch auf Leads mit E-Mail (Instantly ist eine Cold-Email-Plattform)
 - Batching: max. 500 Leads pro API-Call (Instantly-Limit)
+- Monatliches Kontingent: max. INSTANTLY_MONTHLY_LIMIT neue Kontakte pro Kalendermonat
 - Nutzt retry_request() fuer automatisches Retry mit Backoff
 - Graceful Degradation: Wenn nicht konfiguriert, wird der Upload uebersprungen
 """
 
+import json
 import logging
 from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
 
-from config.settings import INSTANTLY_API_KEY, INSTANTLY_CAMPAIGNS
+from config.settings import INSTANTLY_API_KEY, INSTANTLY_CAMPAIGNS, INSTANTLY_MONTHLY_LIMIT
 from src.utils import retry_request
+
+_COUNTER_FILE = Path(__file__).resolve().parent.parent / "output" / "checkpoints" / "instantly_monthly_counter.json"
+
+
+def _load_monthly_counter() -> int:
+    """Liest den Upload-Zaehler des aktuellen Monats. Resettet automatisch bei Monatswechsel."""
+    current_month = datetime.now().strftime("%Y-%m")
+    if _COUNTER_FILE.exists():
+        try:
+            data = json.loads(_COUNTER_FILE.read_text())
+            if data.get("month") == current_month:
+                return int(data.get("uploaded_count", 0))
+        except (json.JSONDecodeError, ValueError):
+            pass
+    return 0
+
+
+def _save_monthly_counter(count: int) -> None:
+    """Schreibt den aktuellen Upload-Zaehler fuer den laufenden Monat."""
+    _COUNTER_FILE.parent.mkdir(parents=True, exist_ok=True)
+    _COUNTER_FILE.write_text(
+        json.dumps({"month": datetime.now().strftime("%Y-%m"), "uploaded_count": count}, indent=2)
+    )
 
 INSTANTLY_API_URL = "https://api.instantly.ai/api/v2/leads/add"
 BATCH_SIZE = 500
@@ -79,6 +106,28 @@ def upload_leads_to_instantly(
         log.info("Keine Leads mit E-Mail vorhanden — nichts zu uploaden")
         return {"uploaded": 0, "failed": 0, "skipped": 0, "total_with_email": 0}
 
+    # Monatliches Kontingent pruefen
+    already_uploaded = _load_monthly_counter()
+    remaining = INSTANTLY_MONTHLY_LIMIT - already_uploaded
+    log.info(
+        f"Instantly Limit: {already_uploaded} / {INSTANTLY_MONTHLY_LIMIT} diesen Monat verwendet "
+        f"(noch {max(remaining, 0)} verfuegbar)"
+    )
+    if remaining <= 0:
+        log.warning(
+            f"Monatliches Instantly-Limit ({INSTANTLY_MONTHLY_LIMIT}) erreicht — Upload uebersprungen. "
+            f"Leads bleiben in der CSV fuer den naechsten Monat."
+        )
+        return {"uploaded": 0, "failed": 0, "skipped": total, "total_with_email": total}
+
+    if total > remaining:
+        log.warning(
+            f"{total} Leads vorhanden, aber nur noch {remaining} Slots diesen Monat — "
+            f"lade nur {remaining} hoch."
+        )
+        leads_with_email = leads_with_email[:remaining]
+        total = remaining
+
     # Leads nach category_key gruppieren
     by_category = defaultdict(list)
     for lead in leads_with_email:
@@ -137,8 +186,14 @@ def upload_leads_to_instantly(
                     f"    Upload fehlgeschlagen fuer {category_key} (Status: {status})"
                 )
 
+    if uploaded > 0:
+        _save_monthly_counter(already_uploaded + uploaded)
+
     log.info(
         f"Instantly Upload fertig: {uploaded} hochgeladen, {failed} fehlgeschlagen, "
         f"{skipped} uebersprungen (keine Kampagne)"
+    )
+    log.info(
+        f"Instantly Limit nach Upload: {already_uploaded + uploaded} / {INSTANTLY_MONTHLY_LIMIT} diesen Monat"
     )
     return {"uploaded": uploaded, "failed": failed, "skipped": skipped, "total_with_email": total}

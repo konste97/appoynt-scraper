@@ -412,6 +412,11 @@ def scrape_leads(
                         "sales_opener": sales_opener,
                     }
 
+                    # Nur Leads mit WhatsApp speichern (kein WA = kein Lead)
+                    if not lead["has_whatsapp"]:
+                        logger.debug(f"  - {name} — kein WhatsApp, uebersprungen")
+                        continue
+
                     checkpoint.add_lead(lead, lead_id)
                     new_leads_count += 1
                     combo_leads_count += 1

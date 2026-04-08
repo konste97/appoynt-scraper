@@ -107,16 +107,25 @@ def export_to_hubspot_csv(leads: list[dict], logger: logging.Logger) -> tuple[Pa
     """
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    leads_with_email = [l for l in leads if l.get("email")]
+    # Nur Leads mit WhatsApp werden behalten (hoechste Conversion-Rate)
+    leads_with_whatsapp = [l for l in leads if l.get("has_whatsapp")]
+    leads_without_whatsapp = [l for l in leads if not l.get("has_whatsapp")]
 
-    # Cold Calling: Keine E-Mail, aber Telefonnummer vorhanden -> anrufbar
+    if leads_without_whatsapp:
+        logger.info(
+            f"Gefiltert: {len(leads_without_whatsapp)} Leads ohne WhatsApp verworfen"
+        )
+
+    leads_with_email = [l for l in leads_with_whatsapp if l.get("email")]
+
+    # Cold Calling: Kein E-Mail, aber Telefonnummer vorhanden -> anrufbar
     leads_cold_calling = [
-        l for l in leads if not l.get("email") and l.get("phone")
+        l for l in leads_with_whatsapp if not l.get("email") and l.get("phone")
     ]
 
     # Leads ohne E-Mail UND ohne Telefon sind nutzlos -> zaehlen aber loggen
     leads_discarded = [
-        l for l in leads if not l.get("email") and not l.get("phone")
+        l for l in leads_with_whatsapp if not l.get("email") and not l.get("phone")
     ]
 
     logger.info(

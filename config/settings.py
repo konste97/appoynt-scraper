@@ -24,6 +24,8 @@ INSTANTLY_API_KEY = os.getenv("INSTANTLY_API_KEY", "")
 # Mapping: category_key -> Instantly Campaign ID (als JSON-String in Env-Var)
 # z.B. INSTANTLY_CAMPAIGNS={"friseur":"abc-123","yoga":"def-456",...}
 INSTANTLY_CAMPAIGNS = _json.loads(os.getenv("INSTANTLY_CAMPAIGNS", "{}"))
+# Maximale Anzahl neuer Kontakte pro Kalendermonat (Growth Plan = 1000)
+INSTANTLY_MONTHLY_LIMIT = int(os.getenv("INSTANTLY_MONTHLY_LIMIT", "1000"))
 
 # Radius in Metern fuer die Places-Suche rund um das Stadtzentrum.
 # 30km deckt auch groessere Staedte gut ab.
@@ -32,7 +34,7 @@ SEARCH_RADIUS_METERS = 30000
 # --- Lead-Limit pro Durchlauf ---
 # Nach dieser Anzahl neuer Leads stoppt der Scraper.
 # Naechster Run macht per Checkpoint dort weiter.
-MAX_LEADS_PER_RUN = int(os.getenv("MAX_LEADS_PER_RUN", "500"))
+MAX_LEADS_PER_RUN = int(os.getenv("MAX_LEADS_PER_RUN", "200"))
 
 # --- Max Leads pro Stadt/Kategorie-Kombi ---
 # Verhindert dass eine einzelne Kategorie das gesamte Limit aufbraucht.
